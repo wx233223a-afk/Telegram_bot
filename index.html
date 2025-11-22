@@ -66,6 +66,8 @@
 
 </main>
 
+<script src='//libtl.com/sdk.js' data-zone='10223099' data-sdk='show_10223099'></script> 
+
 <script>
 let user = { id:"guest", name:"Guest", username:"guest", photo:"https://via.placeholder.com/50", balance:0, totalAds:0, tasks:0, adsWatched:0 };
 
@@ -80,13 +82,6 @@ document.getElementById("userName").innerText = user.name;
 document.getElementById("userUsername").innerText = "@" + user.username;
 document.getElementById("userPhoto").src = user.photo;
 
-// Load Zone ID dynamically
-fetch("zone.json").then(r=>r.json()).then(data=>{
-  let script = document.createElement("script");
-  script.src = `https://ad.gigapub.tech/script?id=${data.zoneId}`;
-  document.body.appendChild(script);
-});
-
 // Load user from users.json if exists
 fetch("users.json").then(r=>r.json()).then(users=>{
   if(users[user.id]){
@@ -96,13 +91,19 @@ fetch("users.json").then(r=>r.json()).then(users=>{
 });
 
 document.getElementById("watchAd").addEventListener("click",()=>{
-  window.showGiga().then(()=>{
+  // Call the new SDK function
+  show_10223099('pop').then(() => {
+    // Reward user logic
     user.totalAds++;
     user.adsWatched++;
-    user.balance += 0.1; 
+    user.balance += 0.1; // Example reward amount
     saveUser();
     updateUI();
-  }).catch(()=>alert("Ad failed"));
+  }).catch(e => {
+    // Ad failed/closed before reward point
+    alert("বিজ্ঞাপন লোড হয়নি বা বন্ধ করা হয়েছে।");
+    console.error("Ad error:", e);
+  });
 });
 
 function updateUI(){
@@ -121,4 +122,5 @@ function saveUser(){
 }
 </script>
 </body>
-</html>
+                                                                         </html>
+  
