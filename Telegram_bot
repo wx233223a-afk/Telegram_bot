@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FREE~INCOME App Source</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Tailwind configuration for Bengali app theme
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        // Using Noto Sans Bengali for better Bengali rendering
+                        sans: ['Inter', 'Noto Sans Bengali', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#0088cc', // Telegram Blue
+                        secondary: '#25c270', // Green for income/success
+                        background: '#f8f9fa',
+                        card: '#ffffff',
+                        danger: '#ff4d4f',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom styles for mobile-friendly UI and font */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@100..900&display=swap');
+        body {
+            font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
+            background-color: #e9e9e9;
+        }
+        #app-container {
+            max-width: 420px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--tw-colors-background);
+        }
+        .screen {
+            display: none;
+            padding: 1.5rem 1rem;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .screen.active {
+            display: block;
+        }
+        #bottom-nav {
+            display: flex;
+            background-color: var(--tw-colors-card);
+            border-top: 1px solid #e5e7eb;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+        }
+        #bottom-nav button {
+            flex-grow: 1;
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #bottom-nav button.active {
+            color: var(--tw-colors-primary);
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+        }
+        .modal-content {
+            background-color: var(--tw-colors-card);
+            padding: 1.5rem;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+    </style>
+    <!-- Phosphor Icons for navigation (mobile friendly icons) -->
+    <script src="https://unpkg.com/phosphor-icons"></script>
+</head>
+<body>
+    <!-- App Container (Mobile View) -->
+    <div id="app-container" class="shadow-lg">
+
+        <!-- Welcome Modal -->
+        <div id="welcome-modal" class="modal show">
+            <div class="modal-content">
+                <i class="ph-sparkle-fill text-secondary text-4xl mb-3"></i>
+                <h3 class="text-2xl font-bold mb-2 text-primary">স্বাগতম!</h3>
+                <p class="text-gray-700 mb-4 leading-relaxed">
+                    জয়েন্ট বোনাস: <span class="font-bold text-secondary">৳৩০.০০</span>। 
+                    নিয়ম মেনে কাজ করলে <span class="text-primary font-bold">১০০% পেমেন্ট</span> পাবেন।
+                </p>
+                <button 
+                    id="modal-understand-btn"
+                    onclick="hideWelcomeModal()"
+                    class="w-full bg-primary hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition duration-200 shadow-md active:scale-[0.98]">
+                    বুঝেছি, শুরু করুন
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div id="main-content" class="flex-grow">
+            <!-- Header (Always visible) -->
+            <header class="bg-primary text-white p-4 shadow-lg sticky top-0 z-10 rounded-b-xl">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-xl font-extrabold flex items-center">
+                        <i class="ph-wallet-fill mr-2 text-2xl"></i> FREE~INCOME
+                    </h1>
+                    <div id="user-info" class="text-sm">
+                        ইউজার আইডি: <span id="user-id-display" class="font-mono text-xs bg-white text-primary px-1 py-0.5 rounded-md">...</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 1. Home Screen -->
+            <div id="home-screen" class="screen active">
+                <div class="bg-white p-6 rounded-2xl shadow-xl mb-6 border-b-4 border-secondary">
+                    <p class="text-sm font-medium text-gray-500 mb-2">আপনার মোট ব্যালেন্স</p>
+                    <h2 class="text-4xl font-extrabold text-primary flex items-end">
+                        <span id="wallet-balance" class="text-5xl">০.০০</span> <span class="ml-1 text-2xl font-light">৳</span>
+                    </h2>
+                    <p class="text-xs mt-2 text-gray-400">রিয়েল-টাইম আপডেট</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white p-4 rounded-xl shadow-md border-l-4 border-blue-400">
+                        <p class="text-xs text-gray-500">মোট রেফারেল</p>
+                        <h4 class="text-3xl font-bold text-blue-600 mt-1 flex items-center">
+                            <i class="ph-users-three-fill mr-2"></i> <span id="home-total-referrals">০</span>
+                        </h4>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-md border-l-4 border-green-400">
+                        <p class="text-xs text-gray-500">মোট বিজ্ঞাপন দেখা</p>
+                        <h4 class="text-3xl font-bold text-secondary mt-1 flex items-center">
+                            <i class="ph-play-circle-fill mr-2"></i> <span id="home-total-ads">০</span>
+                        </h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Task Screen -->
+            <div id="task-screen" class="screen">
+                <div class="bg-white p-6 rounded-2xl shadow-xl mb-6">
+                    <h3 class="text-2xl font-bold text-primary mb-4">ভিডিও দেখে ইনকাম করুন</h3>
+                    
+                    <!-- Ad Count & Progress -->
+                    <div class="mb-5">
+                        <p class="text-sm font-medium text-gray-600 mb-2">
+                            দৈনিক ভিডিও বিজ্ঞাপন: (<span id="ads-count">০</span>/২০)
+                        </p>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div id="ads-progress-bar" class="bg-secondary h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Watch Ad Button -->
+                    <button 
+                        id="watch-ad-btn" 
+                        onclick="watchVideoAd()"
+                        class="w-full bg-secondary hover:bg-green-600 text-white font-extrabold py-4 px-4 rounded-xl text-lg transition duration-200 shadow-lg active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="ph-monitor-play-fill mr-2 text-2xl"></i> বিজ্ঞাপন দেখুন (৳১০.০০)
+                    </button>
+                    <p id="ad-message" class="text-center mt-3 text-sm font-medium text-red-500"></p>
+                </div>
+                
+                <!-- Referral Section -->
+                <div class="bg-white p-6 rounded-2xl shadow-xl">
+                    <h3 class="text-xl font-bold text-blue-600 mb-3 flex items-center">
+                        <i class="ph-share-network-fill mr-2"></i> বন্ধুদের রেফার করুন
+                    </h3>
+                    <p class="text-sm text-gray-600 mb-3">আপনার রেফার কোড শেয়ার করে ইনকাম করুন।</p>
+                    <div class="flex items-center space-x-2 bg-gray-100 p-3 rounded-lg border border-dashed border-gray-300">
+                        <input type="text" id="referral-link" readonly class="flex-grow bg-transparent text-sm font-mono text-gray-800 focus:outline-none" value="Loading...">
+                        <button onclick="copyReferralLink()" class="p-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition duration-150 active:scale-[0.95]">
+                            <i class="ph-copy-bold"></i>
+                        </button>
+                    </div>
+                    <p id="copy-message" class="text-center mt-2 text-sm text-green-600 font-medium hidden">কপি করা হয়েছে!</p>
+                </div>
+            </div>
+
+            <!-- 3. Wallet Screen -->
+            <div id="wallet-screen" class="screen">
+                 <div class="bg-white p-6 rounded-2xl shadow-xl mb-6">
+                    <h3 class="text-2xl font-bold text-primary mb-4 flex items-center">
+                        <i class="ph-wallet-fill mr-2"></i> টাকা উত্তোলন
+                    </h3>
+
+                    <div id="withdrawal-status-card" class="p-4 rounded-xl mb-6 text-center">
+                        <!-- Content dynamically inserted by JS -->
+                    </div>
+
+                    <div class="mb-6 space-y-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <p class="font-bold text-red-600 text-lg mb-2 flex items-center">
+                            <i class="ph-warning-circle-fill mr-2 text-2xl"></i> উত্তোলনের শর্তাবলী
+                        </p>
+                        <ul class="text-sm text-gray-700 space-y-2">
+                            <li id="condition-balance" class="flex items-center">
+                                <i class="ph-check-circle-fill text-xl mr-2 text-secondary opacity-50"></i>
+                                ন্যূনতম ব্যালেন্স: <span class="font-bold ml-1 text-primary">৳১৫০০.০০</span>
+                            </li>
+                            <li id="condition-referrals" class="flex items-center">
+                                <i class="ph-check-circle-fill text-xl mr-2 text-secondary opacity-50"></i>
+                                রেফার প্রয়োজন: <span class="font-bold ml-1 text-primary">১০ জন</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="withdrawal-method" class="block text-sm font-medium text-gray-700 mb-2">পেমেন্ট মাধ্যম নির্বাচন করুন:</label>
+                        <select id="withdrawal-method" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition duration-150">
+                            <option value="Bkash">বিকাশ (Bkash)</option>
+                            <option value="Nagad">নগদ (Nagad)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="withdrawal-number" class="block text-sm font-medium text-gray-700 mb-2">আপনার একাউন্ট নম্বর:</label>
+                        <input type="number" id="withdrawal-number" placeholder="০১৯xxxxxxxx" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition duration-150" required>
+                    </div>
+                    
+                    <button 
+                        id="request-withdrawal-btn"
+                        onclick="requestWithdrawal()"
+                        class="w-full bg-primary hover:bg-blue-700 text-white font-extrabold py-3 px-4 rounded-xl text-lg transition duration-200 shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
+                        উত্তোলন অনুরোধ করুন
+                    </button>
+                    <p id="withdrawal-message" class="text-center mt-3 text-sm font-medium text-red-500"></p>
+                </div>
+            </div>
+
+            <!-- 4. Profile/Account Screen -->
+            <div id="profile-screen" class="screen">
+                <div class="bg-white p-6 rounded-2xl shadow-xl mb-6">
+                    <h3 class="text-2xl font-bold text-primary mb-4 border-b pb-2 flex items-center">
+                        <i class="ph-user-circle-fill mr-2"></i> আমার একাউন্ট
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border-l-4 border-primary">
+                            <span class="font-medium text-gray-700">ইউজার আইডি:</span>
+                            <span id="profile-user-id" class="font-mono text-sm text-primary bg-primary/10 px-2 py-1 rounded">...</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border-l-4 border-secondary">
+                            <span class="font-medium text-gray-700">বর্তমান ব্যালেন্স:</span>
+                            <span id="profile-balance" class="text-lg font-bold text-secondary">৳০.০০</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-xl">
+                    <h3 class="text-xl font-bold text-gray-700 mb-4 border-b pb-2 flex items-center">
+                        <i class="ph-chart-bar-fill mr-2"></i> কাজের তথ্য
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center text-sm border-b pb-2">
+                            <span class="text-gray-600">মোট রেফারেল:</span>
+                            <span id="profile-total-referrals" class="font-bold text-blue-600">০ জন</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm border-b pb-2">
+                            <span class="text-gray-600">মোট বিজ্ঞাপন দেখা:</span>
+                            <span id="profile-total-ads" class="font-bold text-green-600">০ টি</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-600">উত্তোলনের স্ট্যাটাস:</span>
+                            <span id="profile-withdrawal-status" class="font-bold text-orange-500">নেই</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- End of main-content -->
+
+        <!-- Bottom Navigation -->
+        <nav id="bottom-nav">
+            <button id="nav-home" onclick="showScreen('home')" class="active">
+                <i class="ph-house-fill text-xl mb-1"></i> হোম
+            </button>
+            <button id="nav-task" onclick="showScreen('task')">
+                <i class="ph-monitor-play-bold text-xl mb-1"></i> টাক্স
+            </button>
+            <button id="nav-wallet" onclick="showScreen('wallet')">
+                <i class="ph-currency-bdt-fill text-xl mb-1"></i> উত্তোলন
+            </button>
+            <button id="nav-profile" onclick="showScreen('profile')">
+                <i class="ph-user-fill text-xl mb-1"></i> মাই অ্যাকাউন্ট
+            </button>
+        </nav>
+    </div>
+
+    <!-- JavaScript Logic (Firebase & App Core) -->
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Configuration & Environment Variables (MANDATORY)
+        setLogLevel('Debug');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app, db, auth;
+        let userId = null;
+        let isAuthReady = false;
+        
+        // Initial Data Structure and Constants
+        const DEFAULT_USER_DATA = {
+            balance: 30.00, // ৳30 join bonus
+            adsWatchedToday: 0,
+            totalAdsWatched: 0,
+            totalReferrals: 0,
+            lastAdWatchDate: new Date().toLocaleDateString('en-CA'), // YYYY-MM-DD
+            withdrawalStatus: 'none', // 'none', 'pending', 'paid'
+            pendingAmount: 0,
+            withdrawalDetails: {}, // Stores method and number
+        };
+
+        let userData = { ...DEFAULT_USER_DATA };
+        const AD_LIMIT_PER_DAY = 20;
+        const AD_INCOME = 10;
+        const MIN_WITHDRAWAL_BALANCE = 1500;
+        const MIN_WITHDRAWAL_REFERRALS = 10;
+
+        /**
+         * Initializes Firebase and handles authentication.
+         */
+        async function initializeFirebase() {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                // 1. Authenticate user using custom token or anonymously
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                // 2. Auth state listener (Crucial for getting the UID and starting data listener)
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        isAuthReady = true;
+                        console.log("Authentication successful. UID:", userId);
+                        
+                        // Update UI with User ID
+                        document.getElementById('user-id-display').textContent = userId.substring(0, 8) + '...';
+                        document.getElementById('profile-user-id').textContent = userId;
+                        
+                        // Start listening to data once authenticated
+                        listenToUserData();
+                    } else {
+                        console.log("User is signed out or auth state is pending.");
+                    }
+                });
+                
+            } catch (error) {
+                console.error("Firebase initialization or authentication failed:", error);
+            }
+        }
+
+        /**
+         * Gets the Firestore document reference for the current user's data.
+         * Data path: /artifacts/{appId}/users/{userId}/incomeApp/data
+         */
+        function getUserDocRef() {
+            if (!userId || !db) return null;
+            return doc(db, 'artifacts', appId, 'users', userId, 'incomeApp', 'data');
+        }
+
+        /**
+         * Fetches initial
